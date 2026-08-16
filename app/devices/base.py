@@ -37,3 +37,13 @@ class BiometricDevice(ABC):
     def test_connection(self) -> bool:
         """Test physical connection and return status."""
         pass
+
+    @abstractmethod
+    def get_users(self) -> List[Dict[str, Any]]:
+        """Retrieve list of users registered on the device."""
+        pass
+
+    @abstractmethod
+    def write_user(self, user_id: str, name: str) -> bool:
+        """Write/update a user profile on the physical device."""
+        pass

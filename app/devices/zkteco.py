@@ -129,6 +129,43 @@ class ZKTecoK50Device(BiometricDevice):
         except Exception:
             return False
 
+    def get_users(self) -> List[Dict[str, Any]]:
+        """Read users registered on the physical device."""
+        self._ensure_connected()
+        try:
+            raw_users = self._conn.get_users()
+            users = []
+            for u in raw_users:
+                users.append({
+                    "uid": u.uid,
+                    "device_user_id": str(u.user_id),
+                    "name": u.name,
+                    "privilege": u.privilege,
+                })
+            return users
+        except Exception as e:
+            logger.error(f"Failed to read users from device: {str(e)}")
+            raise BiometricDeviceException(f"Error reading users from device: {str(e)}") from e
+
+    def write_user(self, user_id: str, name: str) -> bool:
+        """Write/update a user profile on the physical device using pyzk."""
+        self._ensure_connected()
+        try:
+            logger.info(f"Writing user profile to K50 device: ID={user_id}, Name={name}")
+            uid = int(user_id)
+            self._conn.set_user(
+                uid=uid,
+                name=name,
+                privilege=0,
+                password='',
+                group_id=1,
+                user_id=user_id
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to write user to K50 device: {str(e)}")
+            raise BiometricDeviceException(f"Error writing user to device: {str(e)}") from e
+
     def _ensure_connected(self):
         if not self.is_connected():
             raise BiometricDeviceException("Device is not connected. Call connect() first.")

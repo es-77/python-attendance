@@ -104,3 +104,18 @@ class APIClient:
             if isinstance(e, APIAuthenticationError):
                 raise
             return False
+
+    def get_mapped_users(self) -> List[Dict[str, Any]]:
+        """Fetch the list of mapped users from the ERP backend."""
+        url = f"{self.api_url}/biometric/device/users"
+        try:
+            response = requests.get(url, headers=self.headers, timeout=self.timeout)
+            if response.status_code in (401, 403):
+                raise APIAuthenticationError(f"ERP API credentials rejected on get_mapped_users: {response.text}")
+            response.raise_for_status()
+            return response.json().get('users', [])
+        except Exception as e:
+            logger.error(f"Failed to fetch mapped users: {type(e).__name__} - {str(e)}")
+            if isinstance(e, APIAuthenticationError):
+                raise
+            return []

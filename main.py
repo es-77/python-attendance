@@ -188,6 +188,41 @@ def run_sync_once(dry_run=False):
         logging.info("One-time synchronization finished (DRY RUN - server post skipped).")
         return collect_stats, None
 
+def synchronize_device_users(api_client, device):
+    """Pulls mapped users from ERP and registers them on the physical biometric device if missing or name changed."""
+    logging.info("Starting device users synchronization...")
+    try:
+        # 1. Fetch from ERP
+        erp_users = api_client.get_mapped_users()
+        if not erp_users:
+            logging.info("No mapped users defined in ERP.")
+            return
+            
+        logging.info(f"Retrieved {len(erp_users)} mapped users from ERP.")
+
+        # 2. Fetch from physical device
+        device.connect()
+        try:
+            device_users = device.get_users()
+            device_users_map = {u["device_user_id"]: u for u in device_users}
+
+            # 3. Compare and write
+            for erp_user in erp_users:
+                u_id = str(erp_user["device_user_id"])
+                erp_name = erp_user["name"]
+
+                # If user does not exist on device, or their name has changed
+                if u_id not in device_users_map or device_users_map[u_id]["name"] != erp_name:
+                    logging.info(f"Writing/updating user on device: ID={u_id}, Name={erp_name}")
+                    device.write_user(user_id=u_id, name=erp_name)
+                    time.sleep(0.5) # small delay to avoid overloading device
+                    
+            logging.info("Device users synchronization complete.")
+        finally:
+            device.disconnect()
+    except Exception as e:
+        logging.error(f"Device users sync failed: {str(e)}")
+
 def run_agent_loop():
     """Runs the background agent loop continuously."""
     try:
@@ -212,6 +247,10 @@ def run_agent_loop():
     # Send initial heartbeat
     synchronizer.heartbeat(status="online")
 
+    # Initial users synchronization
+    synchronize_device_users(api_client, device)
+
+    cycle_count = 0
     try:
         while True:
             logging.info("Starting sync cycle...")
@@ -224,6 +263,11 @@ def run_agent_loop():
             
             # Heartbeat update
             synchronizer.heartbeat(status="online")
+            
+            cycle_count += 1
+            # Sync device users every 5 cycles (5 minutes)
+            if cycle_count % 5 == 0:
+                synchronize_device_users(api_client, device)
             
             logging.info(f"Sync cycle finished. Sleeping for {Config.SYNC_INTERVAL} seconds.")
             time.sleep(Config.SYNC_INTERVAL)
