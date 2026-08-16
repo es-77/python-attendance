@@ -158,7 +158,7 @@ class ZKTecoK50Device(BiometricDevice):
                 name=name,
                 privilege=0,
                 password='',
-                group_id=1,
+                group_id='1',
                 user_id=user_id
             )
             return True
