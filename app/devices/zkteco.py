@@ -41,6 +41,12 @@ class ZKTecoK50Device(BiometricDevice):
                 logger.info(f"Connecting to K50 device at {self.ip}:{self.port} (Attempt {attempt + 1})...")
                 self._conn = self._zk.connect()
                 logger.info("Successfully connected to ZKTeco K50 device.")
+                try:
+                    from datetime import datetime
+                    self._conn.set_time(datetime.now())
+                    logger.info("Synchronized K50 hardware clock with computer time.")
+                except Exception as te:
+                    logger.warning(f"Could not sync device time: {te}")
                 return True
             except Exception as e:
                 logger.warning(f"Connection failed: {type(e).__name__} - {str(e)}")
