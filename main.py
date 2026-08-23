@@ -210,15 +210,18 @@ def synchronize_device_users(api_client, device):
             for erp_user in erp_users:
                 u_id = str(erp_user["device_user_id"])
                 if not u_id.isdigit():
-                    logger.warning(f"Skipping non-numeric device_user_id: {u_id}")
+                    logging.warning(f"Skipping non-numeric device_user_id: {u_id}")
                     continue
                 erp_name = erp_user["name"]
+                logging.info(f"Checking ERP user ID={u_id}, Name='{erp_name}'...")
 
                 # If user does not exist on device, or their name has changed
                 if u_id not in device_users_map or device_users_map[u_id]["name"] != erp_name:
-                    logging.info(f"Writing/updating user on device: ID={u_id}, Name={erp_name}")
+                    logging.info(f"--> Writing/updating user on physical device: ID={u_id}, Name={erp_name}")
                     device.write_user(user_id=u_id, name=erp_name)
-                    time.sleep(0.5) # small delay to avoid overloading device
+                    time.sleep(0.5)
+                else:
+                    logging.info(f"--> User ID={u_id} '{erp_name}' ALREADY EXISTS on physical device memory.")
                     
             logging.info("Device users synchronization complete.")
         finally:
