@@ -209,6 +209,9 @@ def synchronize_device_users(api_client, device):
             # 3. Compare and write
             for erp_user in erp_users:
                 u_id = str(erp_user["device_user_id"])
+                if not u_id.isdigit():
+                    logger.warning(f"Skipping non-numeric device_user_id: {u_id}")
+                    continue
                 erp_name = erp_user["name"]
 
                 # If user does not exist on device, or their name has changed
@@ -286,6 +289,7 @@ if __name__ == '__main__':
     parser.add_argument('--sync-once', action='store_true', help="Run exactly one read and synchronize cycle, then exit")
     parser.add_argument('--status', action='store_true', help="Show SQLite database sync queue status counts")
     parser.add_argument('--dry-run', action='store_true', help="With --sync-once, read records but do not upload to ERP")
+    parser.add_argument('--sync-users', action='store_true', help="Fetch mapped ERP users and write them to physical ZKTeco machine memory")
 
     args = parser.parse_args()
 
@@ -297,5 +301,10 @@ if __name__ == '__main__':
         show_status()
     elif args.sync_once:
         run_sync_once(args.dry_run)
+    elif args.sync_users:
+        setup_logger(Config.LOG_LEVEL)
+        api_client = APIClient(Config.ERP_API_URL, Config.ERP_API_TOKEN, Config.DEVICE_NAME, Config.DEVICE_TIMEOUT)
+        device = ZKTecoK50Device(Config.DEVICE_NAME, Config.DEVICE_IP, Config.DEVICE_PORT, Config.DEVICE_TIMEOUT)
+        synchronize_device_users(api_client, device)
     else:
         run_agent_loop()

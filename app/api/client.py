@@ -23,7 +23,7 @@ class APIClient:
         self.api_url = api_url.rstrip('/')
         self.token = token
         self.device_name = device_name
-        self.timeout = timeout
+        self.timeout = int(timeout)
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -62,7 +62,9 @@ class APIClient:
                 
             response.raise_for_status()
             
-            result = response.json()
+            import json
+            raw_text = response.text.lstrip('\ufeff')
+            result = json.loads(raw_text)
             logger.info(f"ERP API sync response: {result.get('message', 'SUCCESS')}")
             return result
 
@@ -92,7 +94,8 @@ class APIClient:
         try:
             response = requests.post(url, json=payload, headers=self.headers, timeout=self.timeout)
             logger.info(f"Heartbeat Response Status: {response.status_code}")
-            logger.info(f"Heartbeat Response Content: {response.text}")
+            clean_text = response.text.lstrip('\ufeff')
+            logger.info(f"Heartbeat Response Content: {clean_text}")
             
             if response.status_code in (401, 403):
                 raise APIAuthenticationError(f"ERP API credentials rejected on heartbeat: {response.text}")
@@ -113,7 +116,10 @@ class APIClient:
             if response.status_code in (401, 403):
                 raise APIAuthenticationError(f"ERP API credentials rejected on get_mapped_users: {response.text}")
             response.raise_for_status()
-            return response.json().get('users', [])
+            import json
+            clean_text = response.text.lstrip('\ufeff')
+            data = json.loads(clean_text)
+            return data.get('users', [])
         except Exception as e:
             logger.error(f"Failed to fetch mapped users: {type(e).__name__} - {str(e)}")
             if isinstance(e, APIAuthenticationError):

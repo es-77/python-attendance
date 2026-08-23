@@ -14,8 +14,8 @@ class ZKTecoK50Device(BiometricDevice):
     def __init__(self, name: str, ip: str, port: int = 4370, timeout: int = 10):
         self.name = name
         self.ip = ip
-        self.port = port
-        self.timeout = timeout
+        self.port = int(port)
+        self.timeout = int(timeout)
         self._zk = None
         self._conn = None
 
