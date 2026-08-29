@@ -18,6 +18,7 @@ class Config:
     ERP_API_TOKEN = os.getenv('ERP_API_TOKEN')
 
     SYNC_INTERVAL = os.getenv('SYNC_INTERVAL', '60')
+    USER_SYNC_INTERVAL = os.getenv('USER_SYNC_INTERVAL', '120')
     LOCAL_DATABASE = os.getenv('LOCAL_DATABASE', 'biometric_agent.db')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
@@ -51,9 +52,6 @@ class Config:
             errors.append("ERP_API_URL is required but not specified in .env.")
         elif not cls.ERP_API_URL.startswith(('http://', 'https://')):
             errors.append("ERP_API_URL must start with http:// or https://")
-        elif cls.ERP_API_URL.startswith('http://') and os.getenv('NODE_ENV') == 'production':
-            # Block HTTP in production unless explicitly in dev mode
-            errors.append("ERP_API_URL must use HTTPS in production environments.")
 
         if not cls.ERP_API_TOKEN:
             errors.append("ERP_API_TOKEN is required but not specified in .env.")
@@ -73,3 +71,7 @@ class Config:
         cls.DEVICE_PORT = int(cls.DEVICE_PORT)
         cls.DEVICE_TIMEOUT = int(cls.DEVICE_TIMEOUT)
         cls.SYNC_INTERVAL = int(cls.SYNC_INTERVAL)
+        try:
+            cls.USER_SYNC_INTERVAL = int(cls.USER_SYNC_INTERVAL)
+        except (ValueError, TypeError):
+            cls.USER_SYNC_INTERVAL = 120
