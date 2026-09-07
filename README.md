@@ -1,5 +1,7 @@
 # ZKTeco K50 Biometric Attendance Sync Agent
 
+> 📖 **Quick Link**: For complete step-by-step setup, user registration, and attendance sync guide, see [SETUP_GUIDE.md](SETUP_GUIDE.md).
+
 A production-ready Windows Biometric Sync Agent written in Python 3. It communicates with a physical ZKTeco K50 biometric machine over TCP/IP (port 4370) and synchronizes attendance logs with the Laravel ERP backend over secure HTTPS.
 
 ---
