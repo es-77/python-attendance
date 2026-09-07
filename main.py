@@ -254,9 +254,14 @@ def run_agent_loop():
     synchronizer.heartbeat(status="online")
 
     # Initial users synchronization
-    synchronize_device_users(api_client, device)
+    try:
+        synchronize_device_users(api_client, device)
+    except Exception as user_err:
+        logging.error(f"Initial user sync error: {str(user_err)}")
 
-    cycle_count = 0
+    last_user_sync = time.time()
+    user_sync_interval = getattr(Config, 'USER_SYNC_INTERVAL', 120)
+
     try:
         while True:
             logging.info("Starting sync cycle...")
@@ -270,10 +275,14 @@ def run_agent_loop():
             # Heartbeat update
             synchronizer.heartbeat(status="online")
             
-            cycle_count += 1
-            # Sync device users every 5 cycles (5 minutes)
-            if cycle_count % 5 == 0:
-                synchronize_device_users(api_client, device)
+            # Auto-sync mapped users from ERP to K50 machine memory
+            current_time = time.time()
+            if current_time - last_user_sync >= user_sync_interval:
+                try:
+                    synchronize_device_users(api_client, device)
+                except Exception as user_err:
+                    logging.error(f"Periodic user sync error: {str(user_err)}")
+                last_user_sync = current_time
             
             logging.info(f"Sync cycle finished. Sleeping for {Config.SYNC_INTERVAL} seconds.")
             time.sleep(Config.SYNC_INTERVAL)
