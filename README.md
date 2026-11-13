@@ -33,6 +33,10 @@ A production-ready Windows Biometric Sync Agent written in Python 3. It communic
 
 ---
 
+
+
+
+
 ## 1. Setup Instructions
 
 ### Prerequisites
