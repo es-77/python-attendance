@@ -6,6 +6,7 @@ A production-ready Windows Biometric Sync Agent written in Python 3. It communic
 
 ---
 
+
 ## Architecture
 ```
   [ ZKTeco K50 Device ] (192.168.1.201)
